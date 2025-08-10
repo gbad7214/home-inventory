@@ -7,8 +7,8 @@ export async function onRequestPost(context) {
     }
 
     await env.DB.prepare(
-      'INSERT INTO items (name, quantity) VALUES (?, ?)'
-    ).bind(data.name, data.quantity).run();
+      'INSERT INTO items (name, quantity, status) VALUES (?, ?, ?)'
+    ).bind(data.name, data.quantity, '100%').run();
 
     return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json' } });
   } catch (err) {
