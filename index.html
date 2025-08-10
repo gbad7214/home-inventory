@@ -14,6 +14,8 @@
   <ul id="itemList"></ul>
 
   <script>
+    const statuses = ['100%', '50%', '剩一點點', '沒了'];
+
     async function fetchItems() {
       const res = await fetch('/api/getItems');
       if (!res.ok) {
@@ -22,26 +24,49 @@
       }
       const items = await res.json();
       const list = document.getElementById('itemList');
-      list.innerHTML = items
-        .map((item) => `<li>${item.name} — 數量: ${item.quantity}</li>`)
-        .join('');
+      list.innerHTML = items.map(item => `
+        <li>
+          ${item.name} - 數量: ${item.quantity} - 狀態: 
+          <select onchange="updateStatus(${item.id}, this.value)">
+            ${statuses.map(s => `<option value="${s}" ${s === item.status ? 'selected' : ''}>${s}</option>`).join('')}
+          </select>
+          <button onclick="deleteItem(${item.id})">刪除</button>
+        </li>
+      `).join('');
+    }
+
+    async function updateStatus(id, status) {
+      const res = await fetch('/api/updateStatus', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status }),
+      });
+      if (!res.ok) alert('更新狀態失敗');
+    }
+
+    async function deleteItem(id) {
+      if (!confirm('確定要刪除嗎？')) return;
+      const res = await fetch('/api/deleteItem', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+      if (res.ok) fetchItems();
+      else alert('刪除失敗');
     }
 
     document.getElementById('addBtn').addEventListener('click', async () => {
       const name = document.getElementById('itemName').value.trim();
       const quantity = Number(document.getElementById('itemQuantity').value);
-
       if (!name || quantity < 1) {
         alert('請輸入有效的物品名稱與數量');
         return;
       }
-
       const res = await fetch('/api/addItem', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, quantity }),
       });
-
       if (res.ok) {
         alert('新增成功！');
         document.getElementById('itemName').value = '';
