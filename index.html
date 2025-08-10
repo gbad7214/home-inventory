@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>家庭物資管理系統</title>
+</head>
+<body>
+  <h1>家庭物資管理系統</h1>
+
+  <input id="itemName" placeholder="物品名稱" />
+  <input id="itemQuantity" type="number" min="1" value="1" />
+  <button id="addBtn">新增物品</button>
+
+  <ul id="itemList"></ul>
+
+  <script>
+    async function fetchItems() {
+      const res = await fetch('/api/getItems');
+      if (!res.ok) {
+        alert('無法取得物品清單');
+        return;
+      }
+      const items = await res.json();
+      const list = document.getElementById('itemList');
+      list.innerHTML = items
+        .map((item) => `<li>${item.name} — 數量: ${item.quantity}</li>`)
+        .join('');
+    }
+
+    document.getElementById('addBtn').addEventListener('click', async () => {
+      const name = document.getElementById('itemName').value.trim();
+      const quantity = Number(document.getElementById('itemQuantity').value);
+
+      if (!name || quantity < 1) {
+        alert('請輸入有效的物品名稱與數量');
+        return;
+      }
+
+      const res = await fetch('/api/addItem', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, quantity }),
+      });
+
+      if (res.ok) {
+        alert('新增成功！');
+        document.getElementById('itemName').value = '';
+        document.getElementById('itemQuantity').value = 1;
+        fetchItems();
+      } else {
+        const err = await res.json();
+        alert('新增失敗: ' + (err.error || '未知錯誤'));
+      }
+    });
+
+    fetchItems();
+  </script>
+</body>
+</html>
